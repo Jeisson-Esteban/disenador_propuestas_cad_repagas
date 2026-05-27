@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Historico — RepagasConcept</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="logo.png" />
+</head>
+<body>
+  <div id="loginScreen" class="login-overlay">
+    <div class="login-box">
+      <div class="login-logo"><img src="logo.png" alt="RepagasConcept"></div>
+      <h2>Proyectamos tu cocina</h2>
+      <p class="login-subtitle">Introduce tus credenciales</p>
+      <div class="login-field"><label for="loginUser">Usuario</label><input type="text" id="loginUser" /></div>
+      <div class="login-field"><label for="loginPass">Contrasena</label><input type="password" id="loginPass" /></div>
+      <p id="loginError" class="login-error" style="display:none">Credenciales incorrectas</p>
+      <button type="button" id="btnLogin" class="btn btn-login">Entrar</button>
+    </div>
+  </div>
+
+  <div id="appContainer" style="display:none">
+    <header class="header home-header">
+      <div class="logo-container"><img src="logo-white.png" alt="RepagasConcept"></div>
+      <button type="button" class="btn-logout" onclick="logout()">Cerrar sesion</button>
+    </header>
+
+    <section class="page-section">
+      <div class="page-header">
+        <div>
+          <a href="index.html" class="page-back">&larr; Volver al inicio</a>
+          <h2>Historico de propuestas</h2>
+        </div>
+        <input type="text" id="searchBox" class="search-box" placeholder="Buscar por proyecto o tipo..." />
+      </div>
+
+      <div id="historicoContent">
+        <div class="empty-state">Cargando propuestas...</div>
+      </div>
+    </section>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    let propuestas = [];
+
+    async function cargarHistorico() {
+      const container = document.getElementById("historicoContent");
+      try {
+        const resp = await fetch(apiUrl("/historico"));
+        if (!resp.ok) throw new Error("Error " + resp.status);
+        propuestas = await resp.json();
+        renderTabla(propuestas);
+      } catch (e) {
+        container.innerHTML = `<div class="empty-state">No se pudo cargar el historico: ${e.message}</div>`;
+      }
+    }
+
+    function renderTabla(items) {
+      const container = document.getElementById("historicoContent");
+      if (!items.length) {
+        container.innerHTML = `<div class="empty-state">No hay propuestas registradas todavia.<br><br><a href="formulario.html" class="btn btn-primary" style="display:inline-block;text-decoration:none">Crear la primera</a></div>`;
+        return;
+      }
+      const rows = items.map(p => {
+        const fecha = p.creado_en ? new Date(p.creado_en).toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" }) : "-";
+        const pvp = p.total_pvp_eur ? p.total_pvp_eur.toLocaleString("es-ES") + " EUR" : "-";
+        return `
+          <tr onclick="verDetalle('${p.id}')">
+            <td><strong>${escapeHtml(p.nombre_proyecto || "Sin nombre")}</strong></td>
+            <td><span class="badge">${escapeHtml(p.tipo_negocio || "-")}</span></td>
+            <td>${p.comensales || "-"}</td>
+            <td>${p.total_equipos || 0}</td>
+            <td><strong>${pvp}</strong></td>
+            <td>${fecha}</td>
+            <td>
+              <button class="btn-icon" onclick="event.stopPropagation();verDetalle('${p.id}')" title="Ver detalle">&#128065;</button>
+              <button class="btn-icon danger" onclick="event.stopPropagation();eliminar('${p.id}', '${escapeHtml(p.nombre_proyecto || '')}')" title="Eliminar">&#128465;</button>
+            </td>
+          </tr>
+        `;
+      }).join("");
+      container.innerHTML = `
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Proyecto</th>
+              <th>Tipo</th>
+              <th>Comensales</th>
+              <th>Equipos</th>
+              <th>Presupuesto</th>
+              <th>Fecha</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+    }
+
+    function verDetalle(id) {
+      window.location.href = "historico-detalle.html?id=" + encodeURIComponent(id);
+    }
+
+    async function eliminar(id, nombre) {
+      if (!confirm(`Eliminar la propuesta "${nombre}"?\nEsta accion no se puede deshacer.`)) return;
+      try {
+        const resp = await fetch(apiUrl("/historico/" + id), { method: "DELETE" });
+        if (resp.ok) {
+          propuestas = propuestas.filter(p => p.id !== id);
+          renderTabla(propuestas);
+        } else {
+          alert("Error eliminando: " + resp.status);
+        }
+      } catch (e) {
+        alert("Error: " + e.message);
+      }
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text == null ? "" : String(text);
+      return div.innerHTML;
+    }
+
+    document.getElementById("searchBox").addEventListener("input", (e) => {
+      const q = e.target.value.toLowerCase();
+      const filtered = propuestas.filter(p =>
+        (p.nombre_proyecto || "").toLowerCase().includes(q) ||
+        (p.tipo_negocio || "").toLowerCase().includes(q)
+      );
+      renderTabla(filtered);
+    });
+
+    if (sessionStorage.getItem("repagas_auth") === "ok") {
+      cargarHistorico();
+    } else {
+      document.addEventListener("DOMContentLoaded", () => {
+        const btn = document.getElementById("btnLogin");
+        const original = btn.onclick;
+        btn.addEventListener("click", () => setTimeout(cargarHistorico, 500));
+      });
+    }
+  </script>
+</body>
+</html>

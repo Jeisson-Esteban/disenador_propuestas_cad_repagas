@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Detalle propuesta - RepagasConcept</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="logo.png" />
+</head>
+<body>
+  <div id="loginScreen" class="login-overlay">
+    <div class="login-box">
+      <div class="login-logo"><img src="logo.png" alt="RepagasConcept"></div>
+      <h2>Proyectamos tu cocina</h2>
+      <p class="login-subtitle">Introduce tus credenciales</p>
+      <div class="login-field"><label for="loginUser">Usuario</label><input type="text" id="loginUser" /></div>
+      <div class="login-field"><label for="loginPass">Contrasena</label><input type="password" id="loginPass" /></div>
+      <p id="loginError" class="login-error" style="display:none">Credenciales incorrectas</p>
+      <button type="button" id="btnLogin" class="btn btn-login">Entrar</button>
+    </div>
+  </div>
+
+  <div id="appContainer" style="display:none">
+    <header class="header home-header">
+      <div class="logo-container"><img src="logo-white.png" alt="RepagasConcept"></div>
+      <button type="button" class="btn-logout" onclick="logout()">Cerrar sesion</button>
+    </header>
+
+    <section class="page-section">
+      <div class="page-header">
+        <div>
+          <a href="historico.html" class="page-back">&larr; Volver al historico</a>
+          <h2 id="pageTitle">Detalle de la propuesta</h2>
+        </div>
+      </div>
+      <div id="detalleContent">
+        <div class="empty-state">Cargando propuesta...</div>
+      </div>
+    </section>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const propId = urlParams.get("id");
+
+    async function cargarDetalle() {
+      const container = document.getElementById("detalleContent");
+      if (!propId) {
+        container.innerHTML = `<div class="empty-state">ID de propuesta no especificado</div>`;
+        return;
+      }
+      try {
+        const resp = await fetch(apiUrl("/historico/" + propId));
+        if (!resp.ok) throw new Error("Error " + resp.status);
+        const p = await resp.json();
+        renderDetalle(p);
+      } catch (e) {
+        container.innerHTML = `<div class="empty-state">No se pudo cargar: ${e.message}</div>`;
+      }
+    }
+
+    function renderDetalle(p) {
+      document.getElementById("pageTitle").textContent = p.nombre_proyecto || "Sin nombre";
+      const fecha = p.creado_en ? new Date(p.creado_en).toLocaleString("es-ES") : "-";
+      const pvp = p.total_pvp_eur ? p.total_pvp_eur.toLocaleString("es-ES") + " EUR" : "-";
+
+      const equipos = Array.isArray(p.equipos) ? p.equipos : [];
+      const equiposRows = equipos.map(e => `
+        <tr>
+          <td><strong>${escapeHtml(e.modelo || "-")}</strong></td>
+          <td><span class="badge">${escapeHtml(e.zona || "-")}</span></td>
+          <td>${e.ancho_mm || "-"} x ${e.fondo_mm || "-"} mm</td>
+          <td>${e.cantidad || 1}</td>
+          <td>${e.pvp_eur ? e.pvp_eur.toLocaleString("es-ES") + " EUR" : "-"}</td>
+        </tr>
+      `).join("");
+
+      const form = p.formulario || {};
+      const proy = form.proyecto || {};
+
+      document.getElementById("detalleContent").innerHTML = `
+        <div class="result-summary">
+          <div class="result-stat">
+            <div class="result-stat-value">${p.total_equipos || 0}</div>
+            <div class="result-stat-label">Equipos</div>
+          </div>
+          <div class="result-stat">
+            <div class="result-stat-value">${pvp}</div>
+            <div class="result-stat-label">Presupuesto estimado</div>
+          </div>
+          <div class="result-stat">
+            <div class="result-stat-value">${p.layout || "-"}</div>
+            <div class="result-stat-label">Layout</div>
+          </div>
+          <div class="result-stat">
+            <div class="result-stat-value">${p.comensales || "-"}</div>
+            <div class="result-stat-label">Comensales</div>
+          </div>
+        </div>
+
+        ${p.notas_llm ? `
+          <div class="ai-comment" style="margin-top:20px">
+            <div class="ai-comment-label">Notas de la IA</div>
+            ${escapeHtml(p.notas_llm)}
+          </div>
+        ` : ""}
+
+        <h3 style="margin:30px 0 12px;color:var(--primary);font-size:1.1rem">Datos del proyecto</h3>
+        <div class="data-table" style="padding:18px 22px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px 30px">
+            <div><strong>Tipo de negocio:</strong> ${escapeHtml(proy.tipo_negocio || "-")}</div>
+            <div><strong>Concepto:</strong> ${escapeHtml(proy.concepto || "-")}</div>
+            <div><strong>Superficie:</strong> ${proy.superficie_m2 ? proy.superficie_m2 + " m2" : "-"}</div>
+            <div><strong>Fecha:</strong> ${fecha}</div>
+          </div>
+        </div>
+
+        <h3 style="margin:30px 0 12px;color:var(--primary);font-size:1.1rem">Equipamiento</h3>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Modelo</th>
+              <th>Zona</th>
+              <th>Dimensiones</th>
+              <th>Uds.</th>
+              <th>PVP</th>
+            </tr>
+          </thead>
+          <tbody>${equiposRows || '<tr><td colspan="5" style="text-align:center;color:var(--gray-500)">Sin equipos</td></tr>'}</tbody>
+        </table>
+
+        <div style="margin-top:30px;display:flex;gap:12px;flex-wrap:wrap">
+          <button class="btn btn-secondary" onclick="window.location.href='historico.html'">Volver al historico</button>
+          <button class="btn btn-primary" onclick="duplicarEnFormulario()">Usar como base para nueva propuesta</button>
+        </div>
+      `;
+    }
+
+    function duplicarEnFormulario() {
+      // Guardar formulario en draft y redirigir al formulario
+      fetch(apiUrl("/historico/" + propId)).then(r => r.json()).then(p => {
+        if (p.formulario) {
+          const draft = { ...p.formulario, _draft_step: 1, _draft_updated: new Date().toISOString() };
+          localStorage.setItem("repagas_form_draft", JSON.stringify(draft));
+          window.location.href = "formulario.html";
+        }
+      });
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text == null ? "" : String(text);
+      return div.innerHTML;
+    }
+
+    if (sessionStorage.getItem("repagas_auth") === "ok") {
+      cargarDetalle();
+    } else {
+      document.addEventListener("DOMContentLoaded", () => {
+        document.getElementById("btnLogin").addEventListener("click", () => setTimeout(cargarDetalle, 500));
+      });
+    }
+  </script>
+</body>
+</html>

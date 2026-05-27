@@ -1,0 +1,42 @@
+# ─── Entorno ────────────────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+
+# ─── Configuracion del frontend (cada despliegue tiene su URL backend) ─
+formulario-repagas/config.js
+formulario-repagas/_redirects
+
+# ─── Python ─────────────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.venv/
+venv/
+dist/
+build/
+
+# ─── IDE / OS ───────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ─── Claude Code ────────────────────────────────────────────────────────
+.claude/
+
+# ─── Outputs locales (DXF/DWG/PNG/PDF generados durante pruebas) ───────
+output/
+server/output/
+tmp/
+*.log
+
+# ─── Credenciales / cuentas de servicio ────────────────────────────────
+google-service-account.json
+*.key
+*.pem
+credentials.*

@@ -1,0 +1,8 @@
+# Plantilla de redirects para Netlify (u otro hosting estatico). Copia este
+# archivo a `_redirects` y sustituye la URL por la de tu backend.
+#
+# El proxy /api/* es opcional: solo lo usa la UI si quiere evitar CORS al
+# llamar al backend desde el mismo origen. Si tu backend permite CORS abierto,
+# este archivo no es necesario.
+
+/api/*  https://<TU-BACKEND>.example.com/:splat  200

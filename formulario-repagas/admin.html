@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Datos y catalogo — RepagasConcept</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="logo.png" />
+</head>
+<body>
+  <div id="loginScreen" class="login-overlay">
+    <div class="login-box">
+      <div class="login-logo"><img src="logo.png" alt="RepagasConcept"></div>
+      <h2>Proyectamos tu cocina</h2>
+      <p class="login-subtitle">Introduce tus credenciales</p>
+      <div class="login-field"><label for="loginUser">Usuario</label><input type="text" id="loginUser" /></div>
+      <div class="login-field"><label for="loginPass">Contrasena</label><input type="password" id="loginPass" /></div>
+      <p id="loginError" class="login-error" style="display:none">Credenciales incorrectas</p>
+      <button type="button" id="btnLogin" class="btn btn-login">Entrar</button>
+    </div>
+  </div>
+
+  <div id="appContainer" style="display:none">
+    <header class="header home-header">
+      <div class="logo-container"><img src="logo-white.png" alt="RepagasConcept"></div>
+      <button type="button" class="btn-logout" onclick="logout()">Cerrar sesion</button>
+    </header>
+
+    <section class="page-section">
+      <div class="page-header">
+        <div>
+          <a href="index.html" class="page-back">&larr; Volver al inicio</a>
+          <h2>Datos y catalogo</h2>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab active" data-tab="equipos">Catalogo de equipos</button>
+        <button class="tab" data-tab="libreria">Librerias CAD</button>
+        <button class="tab" data-tab="rag">Base de conocimiento (IA)</button>
+        <button class="tab" data-tab="textos">Textos PDFs</button>
+      </div>
+
+      <!-- Tab: Equipos -->
+      <div class="tab-panel active" data-panel="equipos">
+        <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+          <input type="text" id="searchBox" class="search-box" placeholder="Buscar por modelo o tipo..." />
+          <button class="btn btn-primary" id="btnNuevoEquipo">+ Anadir equipo</button>
+        </div>
+        <div id="adminContent">
+          <div class="empty-state">Cargando equipos...</div>
+        </div>
+      </div>
+
+      <!-- Modal: crear/editar equipo manual -->
+      <div class="modal-overlay" id="crearModal" style="display:none">
+        <div class="modal-edit">
+          <h3>Anadir nuevo equipo al catalogo</h3>
+          <div class="field"><label>Modelo *</label><input type="text" id="nuevoModelo" placeholder="Ej: CG-720/M POW"></div>
+          <div class="field">
+            <label>Tipo *</label>
+            <select id="nuevoTipo" style="width:100%;padding:9px 12px;border:1px solid var(--gray-200);border-radius:8px;background:var(--gray-50);font-family:inherit;font-size:0.9rem">
+              <option value="">-- Seleccionar --</option>
+              <option value="cocina_gas">Cocina a gas</option>
+              <option value="cocina_electrica">Cocina electrica</option>
+              <option value="fry_top_gas">Fry-top gas</option>
+              <option value="fry_top_electrico">Fry-top electrico</option>
+              <option value="barbacoa">Barbacoa</option>
+              <option value="freidora_gas">Freidora gas</option>
+              <option value="freidora_electrica">Freidora electrica</option>
+              <option value="plancha">Plancha</option>
+              <option value="paellero">Paellero</option>
+              <option value="horno">Horno</option>
+              <option value="armario_conservacion">Armario conservacion</option>
+              <option value="armario_congelacion">Armario congelacion</option>
+              <option value="mesa_refrigerada">Mesa refrigerada</option>
+              <option value="lavavajillas">Lavavajillas</option>
+              <option value="fregadero">Fregadero</option>
+              <option value="mesa_mural">Mesa mural</option>
+              <option value="campana">Campana</option>
+              <option value="otro">Otro</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Alimentacion</label>
+            <select id="nuevaAlimentacion" style="width:100%;padding:9px 12px;border:1px solid var(--gray-200);border-radius:8px;background:var(--gray-50);font-family:inherit;font-size:0.9rem">
+              <option value="gas">Gas</option>
+              <option value="electrico">Electrico</option>
+              <option value="manual">Manual (sin energia)</option>
+            </select>
+          </div>
+          <div class="row-2" style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+            <div class="field"><label>Ancho (mm)</label><input type="number" id="nuevoAncho"></div>
+            <div class="field"><label>Fondo (mm)</label><input type="number" id="nuevoFondo"></div>
+          </div>
+          <div class="row-2" style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+            <div class="field"><label>Alto (mm)</label><input type="number" id="nuevoAlto"></div>
+            <div class="field"><label>PVP (EUR)</label><input type="number" id="nuevoPvp" step="0.01"></div>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" onclick="cerrarCrear()">Cancelar</button>
+            <button type="button" class="btn btn-primary" onclick="guardarNuevo()">Crear equipo</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab: RAG -->
+      <div class="tab-panel" data-panel="rag">
+        <div class="rag-upload-box">
+          <h3>Anadir documento al conocimiento de la IA</h3>
+          <p>Sube un PDF, DOCX o PPTX. La IA usara la informacion de estos documentos para generar propuestas mas precisas (nuevos catalogos, manuales tecnicos, patrones de diseno, etc.).</p>
+
+          <div class="rag-upload-form">
+            <input type="file" id="ragFile" accept=".pdf,.docx,.pptx,.pptm" />
+            <select id="ragCategoria">
+              <option value="catalogo">Catalogo de equipos</option>
+              <option value="identidad_marca">Identidad de marca</option>
+              <option value="normativa">Normativa</option>
+              <option value="diseno_general">Diseno general</option>
+              <option value="zonas_cocina">Zonas de cocina</option>
+              <option value="tipos_negocio">Tipos de negocio</option>
+              <option value="hornos">Hornos</option>
+              <option value="dimensionado">Dimensionado</option>
+              <option value="general">General</option>
+            </select>
+            <button type="button" class="btn btn-primary" id="btnSubirRag">Subir e indexar</button>
+          </div>
+          <div id="ragStatus" class="feedback-status" style="display:none"></div>
+        </div>
+
+        <h3 style="margin:30px 0 14px;color:var(--gray-700);font-size:1.05rem">Documentos indexados</h3>
+        <div id="ragContent">
+          <div class="empty-state">Cargando documentos...</div>
+        </div>
+      </div>
+
+      <!-- Tab: Librerias CAD -->
+      <div class="tab-panel" data-panel="libreria">
+        <div class="rag-upload-box">
+          <h3>Anadir nuevos bloques CAD a la libreria</h3>
+          <p>Sube un archivo DXF o DWG con bloques nuevos. El sistema extraera automaticamente cada bloque, calculara sus dimensiones y los anadira a la libreria maestra que usa la IA al generar los planos.</p>
+
+          <div class="rag-upload-form">
+            <input type="file" id="libreriaFile" accept=".dxf,.dwg" />
+            <button type="button" class="btn btn-primary" id="btnSubirLibreria">Subir e importar bloques</button>
+          </div>
+          <div id="libreriaStatus" class="feedback-status" style="display:none"></div>
+        </div>
+
+        <h3 style="margin:30px 0 14px;color:var(--gray-700);font-size:1.05rem">Bloques disponibles (<span id="libreriaCount">-</span>)</h3>
+        <input type="text" id="libreriaSearch" class="search-box" placeholder="Buscar bloque..." style="margin-bottom:14px" />
+        <div id="libreriaContent">
+          <div class="empty-state">Cargando bloques...</div>
+        </div>
+      </div>
+
+      <!-- Tab: Textos PDFs -->
+      <div class="tab-panel" data-panel="textos">
+        <div class="rag-upload-box">
+          <h3>Textos personalizables de los PDFs</h3>
+          <p>Estos textos aparecen en la Prospeccion y el Presupuesto. Puedes modificarlos sin tocar codigo. Se guardan en la base de datos y se aplican inmediatamente en los PDFs futuros.</p>
+        </div>
+
+        <div id="textosContent" style="margin-top:20px">
+          <div class="empty-state">Cargando textos configurables...</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Modal de edicion -->
+    <div class="modal-overlay" id="editModal" style="display:none">
+      <div class="modal-edit">
+        <h3>Editar equipo</h3>
+        <input type="hidden" id="editId">
+        <div class="field"><label>Modelo</label><input type="text" id="editModelo"></div>
+        <div class="field"><label>Tipo</label><input type="text" id="editTipo"></div>
+        <div class="row-2" style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="field"><label>Ancho (mm)</label><input type="number" id="editAncho"></div>
+          <div class="field"><label>Fondo (mm)</label><input type="number" id="editFondo"></div>
+        </div>
+        <div class="row-2" style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="field"><label>Alto (mm)</label><input type="number" id="editAlto"></div>
+          <div class="field"><label>PVP (EUR)</label><input type="number" id="editPvp" step="0.01"></div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" onclick="cerrarEdit()">Cancelar</button>
+          <button type="button" class="btn btn-primary" onclick="guardarEdit()">Guardar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="auth.js"></script>
+  <script>
+    let equipos = [];
+
+    async function cargarEquipos() {
+      const container = document.getElementById("adminContent");
+      try {
+        const resp = await fetch(apiUrl("/admin/equipos"));
+        if (!resp.ok) throw new Error("Error " + resp.status);
+        equipos = await resp.json();
+        renderTabla(equipos);
+      } catch (e) {
+        container.innerHTML = `<div class="empty-state">No se pudo cargar el catalogo: ${e.message}</div>`;
+      }
+    }
+
+    function renderTabla(items) {
+      const container = document.getElementById("adminContent");
+      if (!items.length) {
+        container.innerHTML = `<div class="empty-state">No hay equipos en el catalogo.</div>`;
+        return;
+      }
+      const rows = items.map(eq => `
+        <tr>
+          <td><strong>${escapeHtml(eq.modelo)}</strong></td>
+          <td><span class="badge">${escapeHtml(eq.tipo || "-")}</span></td>
+          <td>${escapeHtml(eq.alimentacion || "-")}</td>
+          <td>${eq.ancho_mm || "-"} x ${eq.fondo_mm || "-"} x ${eq.alto_mm || "-"}</td>
+          <td>${escapeHtml(eq.serie || "-")}</td>
+          <td><strong>${eq.pvp_eur ? eq.pvp_eur.toLocaleString("es-ES") + " EUR" : "-"}</strong></td>
+          <td style="white-space:nowrap">
+            <button class="btn-icon" onclick='abrirEdit(${JSON.stringify(eq)})' title="Editar">&#9998;</button>
+            <button class="btn-icon danger" onclick="eliminarEquipo('${eq.id}', '${escapeHtml(eq.modelo || "")}')" title="Eliminar">&#128465;</button>
+          </td>
+        </tr>
+      `).join("");
+      container.innerHTML = `
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Modelo</th>
+              <th>Tipo</th>
+              <th>Energia</th>
+              <th>Dimensiones (mm)</th>
+              <th>Serie</th>
+              <th>PVP</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+        <p style="margin-top:14px;color:var(--gray-500);font-size:0.82rem">
+          Mostrando ${items.length} equipos. Para anadir nuevos modelos o categorias contacta con el equipo de RepagasConcept.
+        </p>
+      `;
+    }
+
+    function abrirEdit(eq) {
+      document.getElementById("editId").value = eq.id;
+      document.getElementById("editModelo").value = eq.modelo || "";
+      document.getElementById("editTipo").value = eq.tipo || "";
+      document.getElementById("editAncho").value = eq.ancho_mm || "";
+      document.getElementById("editFondo").value = eq.fondo_mm || "";
+      document.getElementById("editAlto").value = eq.alto_mm || "";
+      document.getElementById("editPvp").value = eq.pvp_eur || "";
+      document.getElementById("editModal").style.display = "flex";
+    }
+
+    function cerrarEdit() {
+      document.getElementById("editModal").style.display = "none";
+    }
+
+    async function guardarEdit() {
+      const id = document.getElementById("editId").value;
+      const data = {
+        modelo: document.getElementById("editModelo").value.trim(),
+        tipo: document.getElementById("editTipo").value.trim(),
+        ancho_mm: parseInt(document.getElementById("editAncho").value) || null,
+        fondo_mm: parseInt(document.getElementById("editFondo").value) || null,
+        alto_mm: parseInt(document.getElementById("editAlto").value) || null,
+        pvp_eur: parseFloat(document.getElementById("editPvp").value) || null,
+      };
+      try {
+        const resp = await fetch(apiUrl("/admin/equipos/" + id), {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+        if (resp.ok) {
+          cerrarEdit();
+          cargarEquipos();
+        } else {
+          const err = await resp.text();
+          alert("Error guardando: " + err);
+        }
+      } catch (e) {
+        alert("Error: " + e.message);
+      }
+    }
+
+    // ─── Crear equipo manual ──────────────
+    document.getElementById("btnNuevoEquipo").addEventListener("click", () => {
+      ["nuevoModelo", "nuevoAncho", "nuevoFondo", "nuevoAlto", "nuevoPvp"].forEach(id => {
+        document.getElementById(id).value = "";
+      });
+      document.getElementById("nuevoTipo").value = "";
+      document.getElementById("nuevaAlimentacion").value = "gas";
+      document.getElementById("crearModal").style.display = "flex";
+    });
+
+    function cerrarCrear() {
+      document.getElementById("crearModal").style.display = "none";
+    }
+
+    async function guardarNuevo() {
+      const data = {
+        modelo: document.getElementById("nuevoModelo").value.trim(),
+        tipo: document.getElementById("nuevoTipo").value,
+        alimentacion: document.getElementById("nuevaAlimentacion").value,
+        ancho_mm: parseInt(document.getElementById("nuevoAncho").value) || null,
+        fondo_mm: parseInt(document.getElementById("nuevoFondo").value) || null,
+        alto_mm: parseInt(document.getElementById("nuevoAlto").value) || null,
+        pvp_eur: parseFloat(document.getElementById("nuevoPvp").value) || null,
+      };
+      if (!data.modelo || !data.tipo) {
+        alert("Modelo y tipo son obligatorios");
+        return;
+      }
+      try {
+        const resp = await fetch(apiUrl("/admin/equipos"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+        if (resp.ok) {
+          cerrarCrear();
+          cargarEquipos();
+        } else {
+          const err = await resp.text();
+          alert("Error: " + err);
+        }
+      } catch (e) {
+        alert("Error: " + e.message);
+      }
+    }
+
+    async function eliminarEquipo(id, modelo) {
+      if (!confirm(`Eliminar "${modelo}" del catalogo?`)) return;
+      try {
+        const resp = await fetch(apiUrl("/admin/equipos/" + id), { method: "DELETE" });
+        if (resp.ok) {
+          cargarEquipos();
+        } else {
+          alert("Error eliminando");
+        }
+      } catch (e) {
+        alert("Error: " + e.message);
+      }
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text == null ? "" : String(text);
+      return div.innerHTML;
+    }
+
+    document.getElementById("searchBox").addEventListener("input", (e) => {
+      const q = e.target.value.toLowerCase();
+      const filtered = equipos.filter(eq =>
+        (eq.modelo || "").toLowerCase().includes(q) ||
+        (eq.tipo || "").toLowerCase().includes(q) ||
+        (eq.serie || "").toLowerCase().includes(q)
+      );
+      renderTabla(filtered);
+    });
+
+    // ─── Tabs ────────────────────────────
+    document.querySelectorAll(".tab").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const target = btn.dataset.tab;
+        document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.tab === target));
+        document.querySelectorAll(".tab-panel").forEach(p => p.classList.toggle("active", p.dataset.panel === target));
+        if (target === "rag") cargarRag();
+        if (target === "libreria") cargarLibreria();
+        if (target === "textos") cargarTextos();
+      });
+    });
+
+    // ─── RAG ─────────────────────────────
+    let documentosRag = [];
+
+    async function cargarRag() {
+      const container = document.getElementById("ragContent");
+      try {
+        const resp = await fetch(apiUrl("/admin/rag"));
+        if (!resp.ok) throw new Error("Error " + resp.status);
+        documentosRag = await resp.json();
+        renderRagTabla(documentosRag);
+      } catch (e) {
+        container.innerHTML = `<div class="empty-state">No se pudo cargar: ${e.message}</div>`;
+      }
+    }
+
+    function renderRagTabla(items) {
+      const container = document.getElementById("ragContent");
+      if (!items.length) {
+        container.innerHTML = `<div class="empty-state">No hay documentos indexados. Sube el primero arriba.</div>`;
+        return;
+      }
+      const rows = items.map(d => `
+        <tr>
+          <td><strong>${escapeHtml(d.titulo)}</strong></td>
+          <td><span class="badge">${escapeHtml(d.categoria || "-")}</span></td>
+          <td>${escapeHtml(d.tipo_archivo || "-").toUpperCase()}</td>
+          <td>${d.num_chunks || 0} chunks</td>
+          <td>
+            <button class="btn-icon danger" onclick="eliminarRag('${d.id}', '${escapeHtml(d.titulo)}')" title="Eliminar">&#128465;</button>
+          </td>
+        </tr>
+      `).join("");
+      container.innerHTML = `
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Titulo</th>
+              <th>Categoria</th>
+              <th>Tipo</th>
+              <th>Chunks</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+    }
+
+    document.getElementById("btnSubirRag").addEventListener("click", async () => {
+      const file = document.getElementById("ragFile").files[0];
+      const categoria = document.getElementById("ragCategoria").value;
+      const status = document.getElementById("ragStatus");
+      const btn = document.getElementById("btnSubirRag");
+
+      if (!file) {
+        status.textContent = "Selecciona un archivo primero";
+        status.className = "feedback-status err";
+        status.style.display = "";
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = "Procesando... (puede tardar)";
+      status.innerHTML = "Extrayendo texto, generando embeddings e indexando en la base de conocimiento...";
+      status.className = "feedback-status ok";
+      status.style.display = "";
+
+      try {
+        const fd = new FormData();
+        fd.append("archivo", file);
+        fd.append("categoria", categoria);
+        const resp = await fetch(apiUrl("/admin/rag/upload"), { method: "POST", body: fd });
+        if (resp.ok) {
+          const result = await resp.json();
+          status.innerHTML = `<strong>Documento indexado:</strong> ${result.titulo} (${result.chunks} chunks)`;
+          document.getElementById("ragFile").value = "";
+          cargarRag();
+        } else {
+          const err = await resp.text();
+          status.textContent = "Error: " + err;
+          status.className = "feedback-status err";
+        }
+      } catch (e) {
+        status.textContent = "Error: " + e.message;
+        status.className = "feedback-status err";
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Subir e indexar";
+      }
+    });
+
+    async function eliminarRag(id, titulo) {
+      if (!confirm(`Eliminar "${titulo}" del RAG?\nLa IA dejara de usar este documento.`)) return;
+      try {
+        const resp = await fetch(apiUrl("/admin/rag/" + id), { method: "DELETE" });
+        if (resp.ok) {
+          documentosRag = documentosRag.filter(d => d.id !== id);
+          renderRagTabla(documentosRag);
+        } else {
+          alert("Error: " + resp.status);
+        }
+      } catch (e) {
+        alert("Error: " + e.message);
+      }
+    }
+
+    // ─── Librerias CAD ───────────────────
+    let bloquesLibreria = [];
+
+    async function cargarLibreria() {
+      const container = document.getElementById("libreriaContent");
+      try {
+        const resp = await fetch(apiUrl("/admin/libreria"));
+        if (!resp.ok) throw new Error("Error " + resp.status);
+        const data = await resp.json();
+        bloquesLibreria = data.bloques || [];
+        document.getElementById("libreriaCount").textContent = data.total || 0;
+        renderLibreriaTabla(bloquesLibreria);
+      } catch (e) {
+        container.innerHTML = `<div class="empty-state">No se pudo cargar: ${e.message}</div>`;
+      }
+    }
+
+    function renderLibreriaTabla(items) {
+      const container = document.getElementById("libreriaContent");
+      if (!items.length) {
+        container.innerHTML = `<div class="empty-state">No hay bloques en la libreria. Sube un DXF/DWG arriba para importar.</div>`;
+        return;
+      }
+      const rows = items.map(b => `
+        <tr>
+          <td><strong>${escapeHtml(b.nombre)}</strong></td>
+          <td>${b.width_mm ? Math.round(b.width_mm) + " mm" : "-"}</td>
+          <td>${b.depth_mm ? Math.round(b.depth_mm) + " mm" : "-"}</td>
+        </tr>
+      `).join("");
+      container.innerHTML = `
+        <table class="data-table">
+          <thead><tr><th>Nombre del bloque</th><th>Ancho</th><th>Fondo</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+    }
+
+    document.getElementById("btnSubirLibreria").addEventListener("click", async () => {
+      const file = document.getElementById("libreriaFile").files[0];
+      const status = document.getElementById("libreriaStatus");
+      const btn = document.getElementById("btnSubirLibreria");
+      if (!file) {
+        status.textContent = "Selecciona un archivo DXF o DWG primero";
+        status.className = "feedback-status err";
+        status.style.display = "";
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = "Importando bloques...";
+      status.innerHTML = "Analizando archivo y extrayendo bloques...";
+      status.className = "feedback-status ok";
+      status.style.display = "";
+      try {
+        const fd = new FormData();
+        fd.append("archivo", file);
+        const resp = await fetch(apiUrl("/admin/libreria/upload"), { method: "POST", body: fd });
+        if (resp.ok) {
+          const r = await resp.json();
+          const nuevos = r.bloques_nuevos?.length || 0;
+          const existentes = r.bloques_existentes?.length || 0;
+          status.innerHTML = `<strong>${nuevos} bloques anadidos</strong> a la libreria (${existentes} ya existian). Total en la libreria: ${r.total_libreria}.`;
+          document.getElementById("libreriaFile").value = "";
+          cargarLibreria();
+        } else {
+          const err = await resp.text();
+          status.textContent = "Error: " + err;
+          status.className = "feedback-status err";
+        }
+      } catch (e) {
+        status.textContent = "Error: " + e.message;
+        status.className = "feedback-status err";
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Subir e importar bloques";
+      }
+    });
+
+    document.getElementById("libreriaSearch").addEventListener("input", (e) => {
+      const q = e.target.value.toLowerCase();
+      const filtered = bloquesLibreria.filter(b =>
+        (b.nombre || "").toLowerCase().includes(q)
+      );
+      renderLibreriaTabla(filtered);
+    });
+
+    // ─── Textos PDFs (placeholder - se implementa con tabla textos_config) ───
+    async function cargarTextos() {
+      const container = document.getElementById("textosContent");
+      try {
+        const resp = await fetch(apiUrl("/admin/textos"));
+        if (!resp.ok) throw new Error("Error " + resp.status);
+        const data = await resp.json();
+        renderTextos(data);
+      } catch (e) {
+        container.innerHTML = `<div class="empty-state">No se pudo cargar: ${e.message}</div>`;
+      }
+    }
+
+    function renderTextos(textos) {
+      const container = document.getElementById("textosContent");
+      const secciones = [
+        { clave: "prospeccion_intro", label: "Prospeccion - Introduccion portada", rows: 3 },
+        { clave: "prospeccion_cierre", label: "Prospeccion - Texto de cierre (pagina firma)", rows: 4 },
+        { clave: "prospeccion_firma", label: "Prospeccion - Aviso de firma (sobre las lineas)", rows: 2 },
+        { clave: "presupuesto_intro", label: "Presupuesto - Texto introductorio", rows: 3 },
+        { clave: "presupuesto_condiciones", label: "Presupuesto - Condiciones legales (pie)", rows: 5 },
+        { clave: "presupuesto_validez_dias", label: "Presupuesto - Dias de validez", rows: 1 },
+        { clave: "presupuesto_iva_porcent", label: "Presupuesto - Porcentaje IVA", rows: 1 },
+      ];
+      container.innerHTML = secciones.map(s => {
+        const valor = (textos[s.clave] || "").replace(/"/g, "&quot;");
+        const input = s.rows === 1
+          ? `<input type="text" id="txt_${s.clave}" value="${valor}" class="search-box" style="width:100%" />`
+          : `<textarea id="txt_${s.clave}" rows="${s.rows}" class="feedback-input">${valor}</textarea>`;
+        return `
+          <div class="rag-upload-box" style="margin-bottom:14px">
+            <h3 style="font-size:0.95rem;margin-bottom:8px">${s.label}</h3>
+            ${input}
+            <div style="margin-top:10px">
+              <button class="btn btn-primary" onclick="guardarTexto('${s.clave}')">Guardar</button>
+              <span id="status_${s.clave}" class="feedback-status" style="display:none;margin-left:10px"></span>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    async function guardarTexto(clave) {
+      const el = document.getElementById("txt_" + clave);
+      const status = document.getElementById("status_" + clave);
+      try {
+        const resp = await fetch(apiUrl("/admin/textos/" + clave), {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ valor: el.value }),
+        });
+        if (resp.ok) {
+          status.textContent = "Guardado";
+          status.className = "feedback-status ok";
+          status.style.display = "inline";
+          setTimeout(() => { status.style.display = "none"; }, 2000);
+        } else {
+          status.textContent = "Error " + resp.status;
+          status.className = "feedback-status err";
+          status.style.display = "inline";
+        }
+      } catch (e) {
+        status.textContent = "Error: " + e.message;
+        status.className = "feedback-status err";
+        status.style.display = "inline";
+      }
+    }
+
+    if (sessionStorage.getItem("repagas_auth") === "ok") {
+      cargarEquipos();
+    } else {
+      document.addEventListener("DOMContentLoaded", () => {
+        document.getElementById("btnLogin").addEventListener("click", () => setTimeout(cargarEquipos, 500));
+      });
+    }
+  </script>
+</body>
+</html>

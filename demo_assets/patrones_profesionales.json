@@ -1,0 +1,31 @@
+{
+  "_comentario": "Patrones de layout que usa el posicionador como few-shot. Versión simplificada: solo 2 patrones genéricos. En producción Repagas alimenta esto con muchos más patrones extraídos de planos FINAL profesionales.",
+  "patrones": [
+    {
+      "id": "lineal_mural_pequenio",
+      "nombre": "Lineal mural — proyecto pequeño",
+      "comensales_min": 0,
+      "comensales_max": 80,
+      "descripcion": "Coccion en una sola pared (norte), lavado en segunda fila o pared adyacente. Frio en pared este.",
+      "distribucion_zonas": {
+        "coccion": "north",
+        "lavado":  "north_row2",
+        "frio":    "east"
+      },
+      "orden_coccion": ["cocina_gas", "fry_top_gas", "barbacoa", "freidora_gas", "paellero"]
+    },
+    {
+      "id": "l_invertida_mediano",
+      "nombre": "L invertida — proyecto mediano/grande",
+      "comensales_min": 80,
+      "comensales_max": 250,
+      "descripcion": "Coccion en pared norte (la línea más larga), lavado en pared sur o oeste, frio en pared este.",
+      "distribucion_zonas": {
+        "coccion": "north",
+        "lavado":  "south",
+        "frio":    "east"
+      },
+      "orden_coccion": ["cocina_gas", "fry_top_gas", "barbacoa", "freidora_gas", "horno"]
+    }
+  ]
+}

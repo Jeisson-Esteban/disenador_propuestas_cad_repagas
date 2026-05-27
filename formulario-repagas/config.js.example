@@ -1,0 +1,15 @@
+// ============================================================================
+// Configuracion del frontend — COPIA este archivo a `config.js` y rellena.
+//
+// `config.js` esta en .gitignore (cada despliegue tiene su propia URL de
+// backend). Asi evitamos commitear URLs especificas y dejamos el frontend
+// reutilizable como plantilla.
+// ============================================================================
+
+window.APP_CONFIG = {
+  // URL del backend FastAPI. Tres opciones segun donde lo hayas desplegado:
+  //   - Local:        "http://localhost:8000"
+  //   - Railway:      "https://<tu-servicio>.up.railway.app"
+  //   - Custom:       "https://api.tudominio.com"
+  API_URL: "http://localhost:8000",
+};
